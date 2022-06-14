@@ -1,0 +1,42 @@
+stages:
+  - build-docker
+
+Build Tagged Parser Docker Images:
+  image: docker:19.03.13
+  services:
+    - docker:19.03.13-dind
+  stage: build-docker
+  variables:
+    TEST_NAME: local/test
+    DOCKER_HOST: tcp://localhost:2375
+    DOCKER_TLS_CERTDIR: ""
+  needs: []
+  only:
+    - tags
+  before_script:
+    - docker login -u $CI_REGISTRY_USERNAME -p $CI_REGISTRY_PASSWORD $CI_REGISTRY_NAME
+  script:
+    - docker build -t sitemap-parser:${CI_COMMIT_REF_NAME} -f sitemap-parser/Dockerfile .
+    - docker tag sitemap-parser:${CI_COMMIT_REF_NAME} $CI_REGISTRY_NAME/openk9/sitemap-parser:${CI_COMMIT_REF_NAME}
+    - docker push $CI_REGISTRY_NAME/openk9/sitemap-parser:${CI_COMMIT_REF_NAME}
+
+Build Latest Parser Docker Images:
+  image: docker:19.03.13
+  services:
+    - docker:19.03.13-dind
+  stage: build-docker
+  variables:
+    TEST_NAME: local/test
+    DOCKER_HOST: tcp://localhost:2375
+    DOCKER_TLS_CERTDIR: ""
+  needs: []
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+      changes:
+        - email-datasource/sitemap-parser/**/*
+  before_script:
+    - docker login -u $CI_REGISTRY_USERNAME -p $CI_REGISTRY_PASSWORD $CI_REGISTRY_NAME
+  script:
+    - docker build -t sitemap-parser:latest -f sitemap-parser/Dockerfile .
+    - docker tag sitemap-parser:latest $CI_REGISTRY_NAME/openk9/sitemap-parser:latest
+    - docker push $CI_REGISTRY_NAME/openk9/sitemap-parser:latest
