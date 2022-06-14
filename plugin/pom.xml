@@ -28,7 +28,7 @@
 
 	<artifactId>sitemap</artifactId>
 	<packaging>jar</packaging>
-	<name>OpenK9 :: Plugins :: Web :: Sitemap</name>
+	<name>OpenK9 :: Plugins :: Sitemap</name>
 
 	<dependencies>
 		<dependency>
