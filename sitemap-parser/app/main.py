@@ -15,7 +15,9 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from typing import Optional
 from pydantic import BaseModel
 import logging
@@ -33,7 +35,7 @@ log_level = os.environ.get("INPUT_LOG_LEVEL")
 if log_level is None:
     log_level = "INFO"
 
-logger = logging.getLogger("uvicorn.access")
+logger = logging.getLogger(__name__)
 
 
 class SitemapRequest(BaseModel):
@@ -41,10 +43,19 @@ class SitemapRequest(BaseModel):
     bodyTag: str
     titleTag: Optional[str] = "title::text"
     datasourceId: int
+    scheduleId: str
     timestamp: int
     replaceRule: Optional[list] = ["", ""]
     allowedDomains: list
     maxLength: Optional[int] = None
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    exc_str = f'{exc}'.replace('\n', ' ').replace('   ', ' ')
+    logging.error(f"{request}: {exc_str}")
+    content = {'status_code': 10422, 'message': exc_str, 'data': None}
+    return JSONResponse(content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
 
 def post_message(url, payload, timeout=30):
@@ -68,6 +79,7 @@ def execute(request: SitemapRequest):
     body_tag = request["bodyTag"]
     title_tag = request["titleTag"]
     datasource_id = request['datasourceId']
+    schedule_id = request['scheduleId']
     timestamp = request["timestamp"]
     allowed_domains = request["allowedDomains"]
     max_length = request["maxLength"]
@@ -82,6 +94,7 @@ def execute(request: SitemapRequest):
         "title_tag": title_tag,
         "replace_rule": json.dumps(replace_rule),
         "datasource_id": datasource_id,
+        "schedule_id": schedule_id,
         "ingestion_url": ingestion_url,
         "timestamp": timestamp,
         "max_length": max_length,
@@ -91,6 +104,7 @@ def execute(request: SitemapRequest):
     response = post_message("http://localhost:6800/schedule.json", payload)
 
     if response["status"] == 'ok':
+        logger.info("Crawling process started")
         return "Crawling process started with job " + str(response["jobid"])
     else:
         return response

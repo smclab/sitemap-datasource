@@ -48,8 +48,8 @@ class CustomSitemapSpider(SitemapSpider):
 
     cont = 0
 
-    def __init__(self, sitemap_urls, allowed_domains, body_tag, title_tag, replace_rule, datasource_id, ingestion_url,
-                 timestamp, max_length, *a, **kw):
+    def __init__(self, sitemap_urls, allowed_domains, body_tag, title_tag, replace_rule, datasource_id, schedule_id,
+                 ingestion_url, timestamp, max_length, *a, **kw):
         super(SitemapSpider, self).__init__(*a, **kw)
 
         self._cbs = []
@@ -65,6 +65,7 @@ class CustomSitemapSpider(SitemapSpider):
         self.title_tag = title_tag
 
         self.datasource_id = datasource_id
+        self.schedule_id = schedule_id
         self.end_timestamp = datetime.utcnow().timestamp() * 1000
         self.ingestion_url = ingestion_url
         self.timestamp = timestamp
@@ -186,6 +187,7 @@ class CustomSitemapSpider(SitemapSpider):
             payload["resources"] = {
                 "binaries": []
             }
+            payload["scheduleId"] = self.schedule_id
 
             yield payload
 

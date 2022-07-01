@@ -66,6 +66,7 @@ def parse_document_by_url(url, spider):
         payload["resources"] = {
             "binaries": binaries
         }
+        payload["scheduleId"] = spider.schedule_id
 
         if content_id not in spider.crawled_ids:
             post_message(spider.ingestion_url, dict(payload))

@@ -28,6 +28,7 @@ class GenericWebItem(scrapy.Item):
 
 class Payload(scrapy.Item):
     datasourceId = scrapy.Field()
+    scheduleId = scrapy.Field()
     contentId = scrapy.Field()
     rawContent = scrapy.Field()
     parsingDate = scrapy.Field()
